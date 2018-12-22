@@ -122,13 +122,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="LTexture.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Render.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LTexture.h" />
-    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="ltexture.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

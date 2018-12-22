@@ -1,6 +1,4 @@
 #pragma once
-#include <string>
-#include <SDL.h>
 
 class LTexture
 {
@@ -27,7 +25,7 @@ public:
 private:
 	//The actual hardware texture
 	SDL_Texture* mTexture;
-	
+
 	//Image dimensions
 	int mWidth;
 	int mHeight;
