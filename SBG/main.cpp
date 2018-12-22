@@ -3,6 +3,8 @@
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#include "LTexture.h"
+#include "Renderer.h"
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 1920;
@@ -20,11 +22,14 @@ void close();
 //The window we'll be rendering to
 SDL_Window* gWindow = nullptr;
 
-SDL_Renderer* gRenderer = nullptr;
-
 SDL_Texture* loadTexture(std::string path);
 
 SDL_Texture* gTexture = nullptr;
+
+Render render1;
+
+LTexture gBackgroundTexture;
+LTexture gSoldierTexture;
 
 bool init()
 {
@@ -49,8 +54,8 @@ bool init()
 		else
 		{
 			//Create renderer for window
-			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
-			if (gRenderer == NULL)
+			render1.gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+			if (render1.gRenderer == NULL)
 			{
 				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
 				success = false;
@@ -58,7 +63,7 @@ bool init()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+				SDL_SetRenderDrawColor(render1.gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -96,10 +101,10 @@ void close()
 	gTexture = NULL;
 
 	//Destroy window
-	SDL_DestroyRenderer(gRenderer);
+	SDL_DestroyRenderer(render1.gRenderer);
 	SDL_DestroyWindow(gWindow);
 	gWindow = NULL;
-	gRenderer = NULL;
+	render1.gRenderer = NULL;
 
 	//Quit SDL subsystems
 	//IMG_QUIT();
@@ -120,7 +125,7 @@ SDL_Texture* loadTexture(std::string path)
 	else
 	{
 		//Create texture from surface pixels
-		newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+		newTexture = SDL_CreateTextureFromSurface(render1.gRenderer, loadedSurface);
 		if (newTexture == NULL)
 		{
 			printf("Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError());
@@ -177,9 +182,9 @@ int main(int argc, char* args[])
 					}
 				}
 
-				SDL_RenderClear(gRenderer);
-				SDL_RenderCopy(gRenderer, gTexture, NULL, NULL);
-				SDL_RenderPresent(gRenderer);
+				SDL_RenderClear(render1.gRenderer);
+				SDL_RenderCopy(render1.gRenderer, gTexture, NULL, NULL);
+				SDL_RenderPresent(render1.gRenderer);
 			}
 		}
 	}
