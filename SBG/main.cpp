@@ -26,6 +26,7 @@ SDL_Renderer* gRenderer = NULL;
 
 SDL_Rect gSpriteClips[4];
 LTexture gSpriteSheetTexture;
+LTexture gModulatedTexture;
 
 LTexture gFooTexture;
 LTexture gBackgroundTexture;
@@ -83,6 +84,12 @@ bool LTexture::loadFromFile(std::string path)
 	//Return success
 	mTexture = newTexture;
 	return mTexture != NULL;
+}
+
+void LTexture::setColor(Uint8 red, Uint8 green, Uint8 blue)
+{
+	//Modulate texture
+	SDL_SetTextureColorMod(mTexture, red, green, blue);
 }
 
 void LTexture::free()
@@ -184,6 +191,11 @@ bool loadMedia()
 		printf("Failed to load Soldier texture!\n");
 		success = false;
 	}
+	if (!gModulatedTexture.loadFromFile("res/colors.png"))
+	{
+		printf("Failed to load Colors texture!\n");
+		success = false;
+	}
 	//Load background texture
 	if (!gBackgroundTexture.loadFromFile("res/SBG_logo_nosoldier.png"))
 	{
@@ -261,6 +273,12 @@ int main(int argc, char* args[])
 			//Event handler
 			SDL_Event e;
 
+			Uint8 r = 255;
+			Uint8 g = 255;
+			Uint8 b = 255;
+
+			int i = 0;
+
 			//While application is running
 			while (!quit)
 			{
@@ -279,6 +297,47 @@ int main(int argc, char* args[])
 						case SDLK_ESCAPE:
 							quit = true;
 							break;
+						case SDLK_UP:
+							i = 0;
+							break;
+						case SDLK_RIGHT:
+							i = 1;
+							break;
+						case SDLK_DOWN:
+							i = 2;
+							break;
+						case SDLK_LEFT:
+							i = 3;
+							break;
+							//Increase red
+						case SDLK_q:
+							r += 32;
+							break;
+
+							//Increase green
+						case SDLK_w:
+							g += 32;
+							break;
+
+							//Increase blue
+						case SDLK_e:
+							b += 32;
+							break;
+
+							//Decrease red
+						case SDLK_a:
+							r -= 32;
+							break;
+
+							//Decrease green
+						case SDLK_s:
+							g -= 32;
+							break;
+
+							//Decrease blue
+						case SDLK_d:
+							b -= 32;
+							break;
 						}
 					}
 
@@ -286,18 +345,15 @@ int main(int argc, char* args[])
 
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
+
+				gModulatedTexture.setColor(r, g, b);
 				//Render background texture to screen
 				gBackgroundTexture.render(0, 0);
+				gModulatedTexture.render(1500,0);
 				//Render soldier texture to screen
 				gFooTexture.render(815, 436);
 
-				gSpriteSheetTexture.render(200, 600, &gSpriteClips[0]);
-
-				gSpriteSheetTexture.render(500, 800, &gSpriteClips[1]);
-
-				gSpriteSheetTexture.render(799, 800, &gSpriteClips[2]);
-
-				gSpriteSheetTexture.render(1200, 754, &gSpriteClips[3]);
+				gSpriteSheetTexture.render(200, 600, &gSpriteClips[i]);
 				//Update screen
 				SDL_RenderPresent(gRenderer);
 			}
