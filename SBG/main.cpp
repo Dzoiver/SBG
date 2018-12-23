@@ -24,6 +24,9 @@ SDL_Window* gWindow = NULL;
 
 SDL_Renderer* gRenderer = NULL;
 
+SDL_Rect gSpriteClips[4];
+LTexture gSpriteSheetTexture;
+
 LTexture gFooTexture;
 LTexture gBackgroundTexture;
 
@@ -94,11 +97,18 @@ void LTexture::free()
 	}
 }
 
-void LTexture::render(int x, int y)
+void LTexture::render(int x, int y, SDL_Rect* clip)
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
-	SDL_RenderCopy(gRenderer, mTexture, NULL, &renderQuad);
+
+	//Set clip rendering dimensions
+	if (clip != NULL)
+	{
+		renderQuad.w = clip->w;
+		renderQuad.h = clip->h;
+	}
+	SDL_RenderCopy(gRenderer, mTexture, clip, &renderQuad);
 }
 
 int LTexture::getWidth()
@@ -169,18 +179,45 @@ bool loadMedia()
 	//Loading success flag
 	bool success = true;
 
-	//Load soldier texture
 	if (!gFooTexture.loadFromFile("res/soldier.png"))
 	{
 		printf("Failed to load Soldier texture!\n");
 		success = false;
 	}
-	
 	//Load background texture
 	if (!gBackgroundTexture.loadFromFile("res/SBG_logo_nosoldier.png"))
 	{
 		printf("Failed to load background texture image\n");
 		success = false;
+	}
+	//Load soldier texture
+	if (!gSpriteSheetTexture.loadFromFile("res/player_sheet.png"))
+	{
+		printf("Failed to load Soldier texture!\n");
+		success = false;
+	}
+	else
+	{
+		//Set the sprite
+		gSpriteClips[0].x = 0;
+		gSpriteClips[0].y = 0;
+		gSpriteClips[0].w = 64;
+		gSpriteClips[0].h = 64;
+
+		gSpriteClips[1].x = 64;
+		gSpriteClips[1].y = 0;
+		gSpriteClips[1].w = 64;
+		gSpriteClips[1].h = 64;
+
+		gSpriteClips[2].x = 128;
+		gSpriteClips[2].y = 0;
+		gSpriteClips[2].w = 64;
+		gSpriteClips[2].h = 64;
+
+		gSpriteClips[3].x = 192;
+		gSpriteClips[3].y = 0;
+		gSpriteClips[3].w = 64;
+		gSpriteClips[3].h = 64;
 	}
 	return success;
 }
@@ -249,11 +286,18 @@ int main(int argc, char* args[])
 
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
-
 				//Render background texture to screen
 				gBackgroundTexture.render(0, 0);
 				//Render soldier texture to screen
 				gFooTexture.render(815, 436);
+
+				gSpriteSheetTexture.render(200, 600, &gSpriteClips[0]);
+
+				gSpriteSheetTexture.render(500, 800, &gSpriteClips[1]);
+
+				gSpriteSheetTexture.render(799, 800, &gSpriteClips[2]);
+
+				gSpriteSheetTexture.render(1200, 754, &gSpriteClips[3]);
 				//Update screen
 				SDL_RenderPresent(gRenderer);
 			}
