@@ -15,6 +15,10 @@ public:
 	//Deallocates texture
 	void free();
 
+	void setBlendMode(SDL_BlendMode blending);
+
+	void setAlpha(Uint8 alpha);
+
 	void setColor(Uint8 red, Uint8 green, Uint8 blue);
 
 	//Renders texture at given point

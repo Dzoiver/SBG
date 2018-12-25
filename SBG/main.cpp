@@ -128,6 +128,17 @@ int LTexture::getHeight()
 	return mHeight;
 }
 
+void LTexture::setBlendMode(SDL_BlendMode blending)
+{
+	SDL_SetTextureBlendMode(mTexture, blending);
+}
+void LTexture::setAlpha(Uint8 alpha)
+{
+	SDL_SetTextureAlphaMod(mTexture, alpha);
+}
+
+
+
 bool init()
 {
 	//Initialization flag
@@ -186,24 +197,7 @@ bool loadMedia()
 	//Loading success flag
 	bool success = true;
 
-	if (!gFooTexture.loadFromFile("res/soldier.png"))
-	{
-		printf("Failed to load Soldier texture!\n");
-		success = false;
-	}
-	if (!gModulatedTexture.loadFromFile("res/colors.png"))
-	{
-		printf("Failed to load Colors texture!\n");
-		success = false;
-	}
-	//Load background texture
-	if (!gBackgroundTexture.loadFromFile("res/SBG_logo_nosoldier.png"))
-	{
-		printf("Failed to load background texture image\n");
-		success = false;
-	}
-	//Load soldier texture
-	if (!gSpriteSheetTexture.loadFromFile("res/player_sheet.png"))
+	if (!gSpriteSheetTexture.loadFromFile("res/player_sheet2.png"))
 	{
 		printf("Failed to load Soldier texture!\n");
 		success = false;
@@ -213,23 +207,38 @@ bool loadMedia()
 		//Set the sprite
 		gSpriteClips[0].x = 0;
 		gSpriteClips[0].y = 0;
-		gSpriteClips[0].w = 64;
-		gSpriteClips[0].h = 64;
+		gSpriteClips[0].w = 99;
+		gSpriteClips[0].h = 98;
 
-		gSpriteClips[1].x = 64;
+		gSpriteClips[1].x = 98;
 		gSpriteClips[1].y = 0;
-		gSpriteClips[1].w = 64;
-		gSpriteClips[1].h = 64;
+		gSpriteClips[1].w = 99;
+		gSpriteClips[1].h = 98;
 
-		gSpriteClips[2].x = 128;
+		gSpriteClips[2].x = 198;
 		gSpriteClips[2].y = 0;
-		gSpriteClips[2].w = 64;
-		gSpriteClips[2].h = 64;
+		gSpriteClips[2].w = 99;
+		gSpriteClips[2].h = 98;
 
-		gSpriteClips[3].x = 192;
+		gSpriteClips[3].x = 297;
 		gSpriteClips[3].y = 0;
-		gSpriteClips[3].w = 64;
-		gSpriteClips[3].h = 64;
+		gSpriteClips[3].w = 99;
+		gSpriteClips[3].h = 98;
+	}
+	if (!gModulatedTexture.loadFromFile("res/colors.png"))
+	{
+		printf("Failed to load Colors texture!\n");
+		success = false;
+	}
+	//Load background texture
+	if (!gBackgroundTexture.loadFromFile("res/SBG_logo.png"))
+	{
+		printf("Failed to load background texture image\n");
+		success = false;
+	}
+	else
+	{
+		gBackgroundTexture.setBlendMode(SDL_BLENDMODE_BLEND);
 	}
 	return success;
 }
@@ -237,7 +246,6 @@ bool loadMedia()
 void close()
 {
 	//Free loaded image
-	gFooTexture.free();
 	gBackgroundTexture.free();
 
 	//Destroy window
@@ -276,6 +284,8 @@ int main(int argc, char* args[])
 			Uint8 r = 255;
 			Uint8 g = 255;
 			Uint8 b = 255;
+
+			Uint8 a = 255;
 
 			int i = 0;
 
@@ -329,6 +339,28 @@ int main(int argc, char* args[])
 							r -= 32;
 							break;
 
+						case SDLK_z:
+							if(a+32 > 255)
+							{
+								a = 255;
+							}
+							else
+							{
+								a += 32;
+							}
+							break;
+
+						case SDLK_x:
+							if (a - 32 < 0)
+							{
+								a = 0;
+							}
+							else
+							{
+								a -= 32;
+							}
+							break;
+
 							//Decrease green
 						case SDLK_s:
 							g -= 32;
@@ -346,15 +378,15 @@ int main(int argc, char* args[])
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
 
+
 				gModulatedTexture.setColor(r, g, b);
 				//Render background texture to screen
-				gBackgroundTexture.render(0, 0);
 				gModulatedTexture.render(1500,0);
-				//Render soldier texture to screen
-				gFooTexture.render(815, 436);
 
 				gSpriteSheetTexture.render(200, 600, &gSpriteClips[i]);
 				//Update screen
+				gBackgroundTexture.setAlpha(a);
+				gBackgroundTexture.render(0, 0);
 				SDL_RenderPresent(gRenderer);
 			}
 		}
