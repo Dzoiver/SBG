@@ -1,8 +1,10 @@
 //Using SDL and standard IO
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <stdio.h>
 #include <string>
+#include <cmath>
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 1920;
@@ -24,20 +26,20 @@ SDL_Window* gWindow = NULL;
 
 SDL_Renderer* gRenderer = NULL;
 
+TTF_Font *gFont = NULL;
+
 SDL_Rect gSpriteClips[4];
 
 const int SPAWN_ANIMATION_FRAMES = 10;
 SDL_Rect gSpawnClips[10];
+LTexture gTextTexture;
 LTexture gSpriteSheetTexture;
 LTexture gSpawnSheetTexture;
 LTexture gModulatedTexture;
+LTexture gImpTexture;
 
 LTexture gFooTexture;
 LTexture gBackgroundTexture;
-
-enum Walking {
-
-};
 
 LTexture::LTexture()
 {
@@ -94,6 +96,33 @@ bool LTexture::loadFromFile(std::string path)
 	return mTexture != NULL;
 }
 
+bool LTexture::loadFromRenderText(std::string textureText, SDL_Color textColor)
+{
+	free();
+
+	SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, textureText.c_str(), textColor);
+
+	if (textSurface == NULL)
+	{
+		printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
+	}
+	else {
+		mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+		if (mTexture == NULL)
+		{
+			printf("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
+		}
+		else {
+			mWidth = textSurface->w;
+			mHeight = textSurface->h;
+		}
+
+		SDL_FreeSurface(textSurface);
+	}
+
+	return mTexture != NULL;
+}
+
 void LTexture::setColor(Uint8 red, Uint8 green, Uint8 blue)
 {
 	//Modulate texture
@@ -112,7 +141,7 @@ void LTexture::free()
 	}
 }
 
-void LTexture::render(int x, int y, SDL_Rect* clip)
+void LTexture::render(int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip)
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -123,7 +152,7 @@ void LTexture::render(int x, int y, SDL_Rect* clip)
 		renderQuad.w = clip->w;
 		renderQuad.h = clip->h;
 	}
-	SDL_RenderCopy(gRenderer, mTexture, clip, &renderQuad);
+	SDL_RenderCopyEx(gRenderer, mTexture, clip, &renderQuad, angle, center, flip);
 }
 
 int LTexture::getWidth()
@@ -193,6 +222,12 @@ bool init()
 					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
 					success = false;
 				}
+
+				if (TTF_Init() == -1)
+				{
+					printf("SDL_ttf coould not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+					success = false;
+				}
 			}
 		}
 	}
@@ -205,6 +240,24 @@ bool loadMedia()
 	//Loading success flag
 	bool success = true;
 
+	gFont = TTF_OpenFont("res/arial.ttf", 28);
+	if (gFont == NULL)
+	{
+		printf("Failed to load arial font! SDL_ttf Error: %s\n", TTF_GetError());
+		success = false;
+	}
+	else
+	{
+		//Render text
+		SDL_Color textColor = { 0, 0, 0 };
+		if (!gTextTexture.loadFromRenderText("The quick brown fox jumps over the lazy dog", textColor))
+		{
+			printf("Failed to render text texture!\n");
+			success = false;
+		}
+	}
+
+	gImpTexture.loadFromFile("res/imp.png");
 	if (!gSpriteSheetTexture.loadFromFile("res/player_sheet4.png"))
 	{
 		printf("Failed to load Soldier texture!\n");
@@ -361,6 +414,12 @@ void close()
 	//Free loaded image
 	gBackgroundTexture.free();
 	gSpriteSheetTexture.free();
+	gImpTexture.free();
+	gTextTexture.free();
+
+	//Free global font
+	TTF_CloseFont(gFont);
+	gFont = NULL;
 
 	//Destroy window
 	SDL_DestroyRenderer(gRenderer);
@@ -370,6 +429,8 @@ void close()
 
 	//Quit SDL subsystems
 	//IMG_QUIT();
+	TTF_Quit();
+		IMG_Quit();
 	SDL_Quit();
 }
 
@@ -401,6 +462,10 @@ int main(int argc, char* args[])
 			Uint8 r = 255;
 			Uint8 g = 255;
 			Uint8 b = 255;
+
+			double degrees = 0;
+
+			SDL_RendererFlip flipType = SDL_FLIP_NONE;
 
 			Uint8 a = 255;
 
@@ -457,6 +522,27 @@ int main(int argc, char* args[])
 							r -= 32;
 							break;
 
+							
+						case SDLK_j:
+							degrees -= 60;
+							break;
+
+						case SDLK_k:
+							degrees += 60;
+							break;
+
+						case SDLK_u:
+							flipType = SDL_FLIP_HORIZONTAL;
+							break;
+
+						case SDLK_i:
+							flipType = SDL_FLIP_NONE;
+							break;
+
+						case SDLK_o:
+							flipType = SDL_FLIP_VERTICAL;
+							break;
+
 						case SDLK_z:
 							if(a+32 > 255)
 							{
@@ -491,10 +577,11 @@ int main(int argc, char* args[])
 						}
 					}
 				}
-
-
+				//Clear screen
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
+
+				gTextTexture.render(600, 700);
 				SDL_Rect* currentClip = &gSpawnClips[frame / 20];
 				gSpawnSheetTexture.render(800, 500, currentClip);
 				++frame;
@@ -507,6 +594,7 @@ int main(int argc, char* args[])
 				//Render background texture to screen
 				gModulatedTexture.render(1500,0);
 
+				gImpTexture.render(1300, 500, NULL, degrees, NULL, flipType);
 				gSpriteSheetTexture.render(200, 600, &gSpriteClips[i]);
 				//Update screen
 				gBackgroundTexture.setAlpha(a);
