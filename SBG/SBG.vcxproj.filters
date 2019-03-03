@@ -23,5 +23,8 @@
     <ClInclude Include="ltexture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

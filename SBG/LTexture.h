@@ -12,7 +12,9 @@ public:
 	//Loads image at specified path
 	bool loadFromFile(std::string path);
 
+#ifdef _SDL_TTF_H
 	bool loadFromRenderText(std::string textureText, SDL_Color textColor);
+#endif
 
 	//Deallocates texture
 	void free();

@@ -9,6 +9,19 @@
 //Screen dimension constants
 const int SCREEN_WIDTH = 1920;
 const int SCREEN_HEIGHT = 1080;
+const int BUTTON_WIDTH = 250;
+const int BUTTON_HEIGHT = 250;
+const int TOTAL_BUTTONS = 5;
+const int BUTTON_HIDE_SHOP_WIDTH = 100;
+const int BUTTON_HIDE_SHOP_HEIGHT = 30;
+
+enum LButtonSprite
+{
+	BUTTON_SPRITE_MOUSE_OUT = 0,
+	BUTTON_SPRITE_MOUSE_OVER_MOTION = 1,
+	BUTTON_SPRITE_MOUSE_DOWN = 2,
+	BUTTON_SPRITE_TOTAL = 3
+};
 
 #include "ltexture.h"
 
@@ -17,6 +30,8 @@ bool init();
 
 //Loads media
 bool loadMedia();
+
+bool is_hide_shop = true;
 
 //Frees media and shuts down SDL
 void close();
@@ -33,13 +48,108 @@ SDL_Rect gSpriteClips[4];
 const int SPAWN_ANIMATION_FRAMES = 10;
 SDL_Rect gSpawnClips[10];
 LTexture gTextTexture;
-LTexture gSpriteSheetTexture;
+LTexture gSoldierSheetTexture;
 LTexture gSpawnSheetTexture;
 LTexture gModulatedTexture;
-LTexture gImpTexture;
+LTexture gArchvileTexture;
 
 LTexture gFooTexture;
 LTexture gBackgroundTexture;
+
+#include "LButton.h"
+
+//Buttons
+
+SDL_Rect Sheet_Shop_buttons[BUTTON_SPRITE_TOTAL];
+
+LButton gShopButton;
+
+SDL_Rect gCard_buttons[BUTTON_SPRITE_TOTAL];
+
+LTexture gCardSheetTexture;
+
+LButton gButtons[TOTAL_BUTTONS];
+
+
+
+LButton::LButton()
+{
+	mPosition.x = 0;
+	mPosition.y = 0;
+	
+	mCurrentSprite = BUTTON_SPRITE_MOUSE_OUT;
+}
+
+void LButton::setPosition(int x, int y)
+{
+	mPosition.x = x;
+	mPosition.y = y;
+}
+
+void LButton::handleEvent(SDL_Event* e)
+{
+	//If mouse event happened
+	if (e->type == SDL_MOUSEMOTION || e->type == SDL_MOUSEBUTTONDOWN || e->type == SDL_MOUSEBUTTONUP)
+	{
+		//Get mouse position
+		int x, y;
+		SDL_GetMouseState(&x, &y);
+
+		//Check if mouse is in button
+		bool inside = true;
+
+		//Mouse is left of the button
+		if (x < mPosition.x)
+		{
+			inside = false;
+		}
+		//Mouse is right of the button
+		else if (x > mPosition.x + BUTTON_WIDTH)
+		{
+			inside = false;
+		}
+		//Mouse about the button
+		else if (y < mPosition.y)
+		{
+			inside = false;
+		}
+		//Mouse below the button
+		else if (y > mPosition.y + BUTTON_HEIGHT)
+		{
+			inside = false;
+		}
+		//Mouse is outside button
+		if (!inside)
+		{
+			mCurrentSprite = BUTTON_SPRITE_MOUSE_OUT;
+		}
+		//Mouse is inside button
+		else {
+			//Set mouse over sprite
+			switch (e->type)
+			{ 
+			case SDL_MOUSEMOTION:
+					mCurrentSprite = BUTTON_SPRITE_MOUSE_OVER_MOTION;
+					break;
+
+				case SDL_MOUSEBUTTONDOWN:
+						mCurrentSprite = BUTTON_SPRITE_MOUSE_DOWN;
+						break;
+
+					case SDL_MOUSEBUTTONUP:
+						mCurrentSprite = BUTTON_SPRITE_MOUSE_OVER_MOTION;
+						break;
+
+			}
+		}
+	}
+}
+
+void LButton::render()
+{
+	//Show current button sprite
+	gCardSheetTexture.render(mPosition.x, mPosition.y, &gCard_buttons[mCurrentSprite]);
+}
 
 LTexture::LTexture()
 {
@@ -53,7 +163,7 @@ LTexture::~LTexture()
 	//Deallocate
 	free();
 }
-
+#ifdef _SDL_TTF_H
 bool LTexture::loadFromFile(std::string path)
 {
 	//Get rid of preexisting texture
@@ -95,6 +205,7 @@ bool LTexture::loadFromFile(std::string path)
 	mTexture = newTexture;
 	return mTexture != NULL;
 }
+#endif
 
 bool LTexture::loadFromRenderText(std::string textureText, SDL_Color textColor)
 {
@@ -250,15 +361,15 @@ bool loadMedia()
 	{
 		//Render text
 		SDL_Color textColor = { 0, 0, 0 };
-		if (!gTextTexture.loadFromRenderText("The quick brown fox jumps over the lazy dog", textColor))
+		if (!gTextTexture.loadFromRenderText("QWE ASD for changing colors. JK to rotate. ZX to change alpha. Arrows to change direction", textColor))
 		{
 			printf("Failed to render text texture!\n");
 			success = false;
 		}
 	}
 
-	gImpTexture.loadFromFile("res/imp.png");
-	if (!gSpriteSheetTexture.loadFromFile("res/player_sheet4.png"))
+	gArchvileTexture.loadFromFile("res/imp.png");
+	if (!gSoldierSheetTexture.loadFromFile("res/player_sheet4.png"))
 	{
 		printf("Failed to load Soldier texture!\n");
 		success = false;
@@ -406,6 +517,58 @@ bool loadMedia()
 	{
 		gBackgroundTexture.setBlendMode(SDL_BLENDMODE_BLEND);
 	}
+	//Load card texture sheet
+	if (!gCardSheetTexture.loadFromFile("res/card_sheet.png"))
+	{
+		printf("Failed to load card sheet texture!\n");
+		success = false;
+	}
+	else
+	{
+		//Set sprites
+		for (int i = 0; i < BUTTON_SPRITE_TOTAL; ++i)
+		{
+			gCard_buttons[i].x = 0;
+			gCard_buttons[i].y = i * 250;
+			gCard_buttons[i].w = BUTTON_WIDTH;
+			gCard_buttons[i].h = BUTTON_HEIGHT;
+		}
+
+		int space_between_shop_cards = 100;
+		int card_x_Position = 150;
+		for (int i = 0; i < 5; i++)
+		{
+			gButtons[i].setPosition(card_x_Position, 150);
+			card_x_Position+=350;
+		}
+
+
+
+		Sheet_Shop_buttons[0].x = 250;
+		Sheet_Shop_buttons[0].y = 0;
+		Sheet_Shop_buttons[0].w = BUTTON_HIDE_SHOP_WIDTH;
+		Sheet_Shop_buttons[0].h = BUTTON_HIDE_SHOP_HEIGHT;
+
+		Sheet_Shop_buttons[1].x = 250;
+		Sheet_Shop_buttons[1].y = 31;
+		Sheet_Shop_buttons[1].w = BUTTON_HIDE_SHOP_WIDTH;
+		Sheet_Shop_buttons[1].h = BUTTON_HIDE_SHOP_HEIGHT;
+
+		Sheet_Shop_buttons[2].x = 250;
+		Sheet_Shop_buttons[2].y = 31;
+		Sheet_Shop_buttons[2].w = BUTTON_HIDE_SHOP_WIDTH;
+		Sheet_Shop_buttons[2].h = BUTTON_HIDE_SHOP_HEIGHT;
+
+		Sheet_Shop_buttons[3].x = 250;
+		Sheet_Shop_buttons[3].y = 31;
+		Sheet_Shop_buttons[3].w = BUTTON_HIDE_SHOP_WIDTH;
+		Sheet_Shop_buttons[3].h = BUTTON_HIDE_SHOP_HEIGHT;
+
+		gShopButton.setPosition(60, 800);
+
+	}
+
+
 	return success;
 }
 
@@ -413,9 +576,10 @@ void close()
 {
 	//Free loaded image
 	gBackgroundTexture.free();
-	gSpriteSheetTexture.free();
-	gImpTexture.free();
+	gSoldierSheetTexture.free();
+	gArchvileTexture.free();
 	gTextTexture.free();
+	gCardSheetTexture.free();
 
 	//Free global font
 	TTF_CloseFont(gFont);
@@ -576,6 +740,12 @@ int main(int argc, char* args[])
 							break;
 						}
 					}
+					//Handle button events
+					for (int i = 0; i < TOTAL_BUTTONS; ++i)
+					{
+						gButtons[i].handleEvent(&e);
+					}
+						gShopButton.handleEvent(&e);
 				}
 				//Clear screen
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -594,11 +764,23 @@ int main(int argc, char* args[])
 				//Render background texture to screen
 				gModulatedTexture.render(1500,0);
 
-				gImpTexture.render(1300, 500, NULL, degrees, NULL, flipType);
-				gSpriteSheetTexture.render(200, 600, &gSpriteClips[i]);
+				gArchvileTexture.render(1300, 500, NULL, degrees, NULL, flipType);
+				gSoldierSheetTexture.render(200, 600, &gSpriteClips[i]);
 				//Update screen
 				gBackgroundTexture.setAlpha(a);
 				gBackgroundTexture.render(0, 0);
+
+				//render buttons
+				if (is_hide_shop)
+				{
+					for (int i = 0; i < TOTAL_BUTTONS; ++i)
+					{
+						gButtons[i].render();
+					}
+				}
+
+				gShopButton.render();
+
 				SDL_RenderPresent(gRenderer);
 			}
 		}
